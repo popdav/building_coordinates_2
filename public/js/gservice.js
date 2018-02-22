@@ -6,8 +6,9 @@ var yellow_marker = null;
 var school_list = [];
 var schoolMarkerArray = [];
 
-var crime_list = null;
+var crime_list = [];
 var crimeMarkerArray = [];
+
 
 angular.module('gservice', [])
 	.factory('gservice', function($rootScope, $http){
@@ -152,10 +153,20 @@ function crimeMarkerDelete() {
 }
 
 
-function select_a_crime(crime){
+function select_a_crime(crime, cp_lat, cp_long, ap_lat, ap_long, rad){
 	for(var i=0; i<crime_list.length; i++){
 		if(crime_list[i].id == crimeMarkerArray[i].id){
-			crimeMarkerArray[i].setIcon("http://maps.google.com/mapfiles/ms/micons/blue-pushpin.png");
+			var cp_c = getDistance({lat: cp_lat, lng: cp_long}, {lat: crime_list[i].obj.location.y, lng: crime_list[i].obj.location.x})
+			var ap_c = getDistance({lat: ap_lat, lng: ap_long}, {lat: crime_list[i].obj.location.y, lng: crime_list[i].obj.location.x})
+
+			if(cp_c <= rad && ap_c <= rad){
+
+				crimeMarkerArray[i].setIcon("http://maps.google.com/mapfiles/ms/micons/grn-pushpin.png");
+			}
+			else if(cp_c <= rad && ap_c > rad)
+				crimeMarkerArray[i].setIcon("http://maps.google.com/mapfiles/ms/micons/ylw-pushpin.png");
+			else if(cp_c > rad && ap_c <= rad)
+				crimeMarkerArray[i].setIcon("http://maps.google.com/mapfiles/ms/micons/blue-pushpin.png");
 
 
 			if(crime.id == crimeMarkerArray[i].id)

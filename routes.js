@@ -38,7 +38,7 @@ module.exports = function(app){
 
 
 	//poziv u bazu za prekrsaje
-	app.post('/crimes', function(req, res){
+	app.post('/crimesAp', function(req, res){
 		var objSelected = req.body.objSelect;
 		var radius = req.body.radi;
 
@@ -48,7 +48,7 @@ module.exports = function(app){
 
 		dbCrimes.command({
 		   geoNear: "crimes" ,
-		   near: { type: "Point" , coordinates: [ objSelected.cp_lon, objSelected.cp_lat ]  || [ objSelected.ap_lon, objSelected.ap_lat ]} ,
+		   near: { type: "Point" , coordinates: [ objSelected.ap_lon, objSelected.ap_lat ]} ,
 		   spherical: true,
 		   "maxDistance" : radius,
 		   "limit" : 10
@@ -56,7 +56,32 @@ module.exports = function(app){
 			if(err)
 				throw err;
 			for(var i=0; i<docs.results.length; i++)
-				docs.results[i].id = i;
+				docs.results[i].id = Math.random().toString(36).substr(2, 9);
+			res.send(docs.results);
+		})
+	})
+
+
+	//poziv u bazu za prekrsaje
+	app.post('/crimesCp', function(req, res){
+		var objSelected = req.body.objSelect;
+		var radius = req.body.radi;
+
+		radius = Number(radius);
+		if(radius < 0)
+			radius = radius * (-1);
+
+		dbCrimes.command({
+		   geoNear: "crimes" ,
+		   near: { type: "Point" , coordinates: [ objSelected.cp_lon, objSelected.cp_lat ]} ,
+		   spherical: true,
+		   "maxDistance" : radius,
+		   "limit" : 10
+		}, function(err, docs){
+			if(err)
+				throw err;
+			for(var i=0; i<docs.results.length; i++)
+				docs.results[i].id = Math.random().toString(36).substr(2, 9);
 			res.send(docs.results);
 		})
 	})
@@ -74,7 +99,7 @@ module.exports = function(app){
 		radius = Number(radius);
 		if(radius < 0)
 			radius = radius * (-1);
-		
+
 
 		dbSchool.command({
 		   geoNear: "schoolDetail" ,

@@ -260,7 +260,7 @@ queryCtrl.controller('queryCtrl', function($scope, $http, $rootScope, geolocatio
 				radi: $scope.formData.radius
 			}
 			console.log(policeBody)
-			$http.post('/crimes', policeBody)
+			$http.post('/crimesAp', policeBody)
 				.then(function(docs){
 					for(var i=0; i<docs.data.length; i++){
 						var string = "Total: " + docs.data[i].obj.total;
@@ -317,10 +317,82 @@ queryCtrl.controller('queryCtrl', function($scope, $http, $rootScope, geolocatio
 						docs.data[i].string = string;
 					}
 					console.log(docs.data);
-					$scope.policeAddress = docs.data;
+					crime_list = crime_list.concat(docs.data);
+					/*$scope.policeAddress = docs.data;
 					$scope.indeks6 = 1;
 					crime_list = docs.data;
-					crimeMarkerMaker();
+					crimeMarkerMaker();*/
+				})
+				.then(function(docs){
+					$http.post('/crimesCp', policeBody)
+						.then(function(docs){
+							for(var i=0; i<docs.data.length; i++){
+								var string = "Total: " + docs.data[i].obj.total;
+
+								if(docs.data[i].obj.violenceAndSexualOffences)
+									string += ", Violence and sexual offences: " + docs.data[i].obj.violenceAndSexualOffences;
+
+								if(docs.data[i].obj.vehicleCrime)
+									string += ", Vehicle crime: " + docs.data[i].obj.vehicleCrime;
+
+								if(docs.data[i].obj.antisocialBehaviour)
+									string += ", Antisocial behaviour: " + docs.data[i].obj.antisocialBehaviour;
+
+								if(docs.data[i].obj.burglary)
+									string += ", Burglary: " + docs.data[i].obj.burglary;
+
+								if(docs.data[i].obj.otherTheft)
+									string += ", Other theft: " + docs.data[i].obj.otherTheft;
+
+								if(docs.data[i].obj.shoplifting)
+									string += ", Shoplifting: " + docs.data[i].obj.shoplifting;
+
+								if(docs.data[i].obj.possessionOfWeapons)
+									string += ", Possession of weapons: " + docs.data[i].obj.possessionOfWeapons;
+
+								if(docs.data[i].obj.otherCrime)
+									string += ", Other crime: " + docs.data[i].obj.otherCrime;
+
+								if(docs.data[i].obj.drugs)
+									string += ", Drugs: " + docs.data[i].obj.drugs;
+
+								if(docs.data[i].obj.bicycleTheft)
+									string += ", Bicycle theft: " + docs.data[i].obj.bicycleTheft;
+
+								if(docs.data[i].obj.publicOrder)
+									string += ", Public order: " + docs.data[i].obj.publicOrder;
+
+								if(docs.data[i].obj.theftFromThePerson)
+									string += ", Theft from the person: " + docs.data[i].obj.theftFromThePerson;
+
+								if(docs.data[i].obj.robbery)
+									string += ", Robbery: " + docs.data[i].obj.robbery;
+
+								if(docs.data[i].obj.criminalDamageAndArson)
+									string += ", Criminal damage and arson: " + docs.data[i].obj.criminalDamageAndArson;
+
+								if(docs.data[i].obj.violentCrime)
+									string += ", Violent crime: " + docs.data[i].obj.violentCrime;
+
+								if(docs.data[i].obj.publicDisorderAndWeapons)
+									string += ", Public disorder and weapons: " + docs.data[i].obj.publicDisorderAndWeapons;
+
+
+								docs.data[i].string = string;
+							}
+							console.log(docs.data);
+
+							$scope.indeks6 = 1;
+							crime_list = crime_list.concat(docs.data);
+							$scope.policeAddress = crime_list;
+							deleteDuplicatesCrimes(crime_list);
+							console.log(crime_list);
+							crimeMarkerMaker(obj.cp_lat, obj.cp_lon, obj.ap_lat, obj.ap_lon, $scope.formData.radius);
+						})
+						.catch(function(err){
+								console.log("Error " + err);
+								throw err;
+						})
 				})
 				.catch(function(err){
 						console.log("Error " + err);
@@ -330,12 +402,23 @@ queryCtrl.controller('queryCtrl', function($scope, $http, $rootScope, geolocatio
 	}
 
 
-	function crimeMarkerMaker() {
+	function crimeMarkerMaker(cp_lat, cp_long, ap_lat, ap_long, rad) {
 		if(crime_list != null) {
 			for(var i=0; i<crime_list.length; i++){
+				/*var cp_sp_dis = getDistance({lat: cp_lat, lng: cp_long}, {lat: school_list[i].coordinates.latitude, lng: school_list[i].coordinates.longitude});
+				var ap_sp_dis = getDistance({lat: school_list[i].coordinates.latitude, lng: school_list[i].coordinates.longitude}, {lat: ap_lat, lng: ap_long});*/
+				var cp_c = getDistance({lat: cp_lat, lng: cp_long}, {lat: crime_list[i].obj.location.y, lng: crime_list[i].obj.location.x})
+				var ap_c = getDistance({lat: ap_lat, lng: ap_long}, {lat: crime_list[i].obj.location.y, lng: crime_list[i].obj.location.x})
 
+				var crime_icon;
+				if(cp_c <= rad && ap_c <= rad){
 
-				var crime_icon = "http://maps.google.com/mapfiles/ms/micons/blue-pushpin.png"
+					crime_icon = "http://maps.google.com/mapfiles/ms/micons/grn-pushpin.png";
+				}
+				else if(cp_c <= rad && ap_c > rad)
+					crime_icon = "http://maps.google.com/mapfiles/ms/micons/ylw-pushpin.png";
+				else if(cp_c > rad && ap_c <= rad)
+					crime_icon = "http://maps.google.com/mapfiles/ms/micons/blue-pushpin.png";
 
 				var crime_marker = new google.maps.Marker({
 				    position: {lat: crime_list[i].obj.location.y, lng: crime_list[i].obj.location.x},
@@ -345,7 +428,21 @@ queryCtrl.controller('queryCtrl', function($scope, $http, $rootScope, geolocatio
 				crime_marker.set("id", crime_list[i].id);
 				crime_marker.addListener('click', function() {
 					for(var i=0; i<crimeMarkerArray.length; i++){
-						crimeMarkerArray[i].setIcon("http://maps.google.com/mapfiles/ms/micons/blue-pushpin.png")
+
+						var cp_c = getDistance({lat: cp_lat, lng: cp_long}, {lat: crime_list[i].obj.location.y, lng: crime_list[i].obj.location.x})
+						var ap_c = getDistance({lat: ap_lat, lng: ap_long}, {lat: crime_list[i].obj.location.y, lng: crime_list[i].obj.location.x})
+
+						if(cp_c <= rad && ap_c <= rad){
+
+							crimeMarkerArray[i].setIcon("http://maps.google.com/mapfiles/ms/micons/grn-pushpin.png");
+						}
+						else if(cp_c <= rad && ap_c > rad)
+							crimeMarkerArray[i].setIcon("http://maps.google.com/mapfiles/ms/micons/ylw-pushpin.png");
+						else if(cp_c > rad && ap_c <= rad)
+							crimeMarkerArray[i].setIcon("http://maps.google.com/mapfiles/ms/micons/blue-pushpin.png");
+
+
+						//crimeMarkerArray[i].setIcon(crime_icon);
 					}
 
 					this.setIcon("http://maps.google.com/mapfiles/ms/micons/ltblu-pushpin.png");
@@ -389,7 +486,7 @@ queryCtrl.controller('queryCtrl', function($scope, $http, $rootScope, geolocatio
 
 
 		if(crimeObj != undefined || crimeObj != null){
-			select_a_crime(crimeObj[0]);
+			select_a_crime(crimeObj[0], obj.cp_lat, obj.cp_lon, obj.ap_lat, obj.ap_lon, $scope.formData.radius);
 		}
 	}
 
@@ -403,6 +500,20 @@ function deleteDuplicates(niz){
 		a = niz[i];
 		for(var j=i+1; niz[j]; j++){
 			if(a.name === niz[j].name){
+
+				niz.splice(j, 1);
+				j--;
+			}
+		}
+	}
+}
+
+function deleteDuplicatesCrimes(niz){
+	var a;
+	for(var i=0; niz[i]; i++){
+		a = niz[i];
+		for(var j=i+1; niz[j]; j++){
+			if(a.obj.location.x === niz[j].obj.location.x && a.obj.location.y === niz[j].obj.location.y){
 
 				niz.splice(j, 1);
 				j--;
