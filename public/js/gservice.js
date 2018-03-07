@@ -4,10 +4,12 @@ var yellow_circle = null;
 var bule_marker = null;
 var yellow_marker = null;
 var school_list = [];
-var schoolMarkerArray = [];
+var school_list1 = [], school_list2 = [], school_union = [], school_diff_cp = [], school_diff_ap = [];
+var schoolMarkerArrayUnion = [], schoolMarkerArrayApCp = [];
 
 var crime_list = [];
-var crimeMarkerArray = [];
+var crime_list1 = [], crime_list2 = [], crime_union = [], crime_diff_ap = [], crime_diff_cp = [];
+var crimeMarkerArrayUnion = [], crimeMarkerArrayAp = [], crimeMarkerArrayCp = [];
 
 
 angular.module('gservice', [])
@@ -113,65 +115,78 @@ var getDistance = function(p1, p2) {
 
 
 function schoolMarkerDelete() {
-	if(schoolMarkerArray != null){
-		for(var i=0; i<schoolMarkerArray.length; i++)
-			schoolMarkerArray[i].setMap(null);
 
-		schoolMarkerArray = [];
-	}
+	for(var i=0; i<schoolMarkerArrayUnion.length; i++)
+		schoolMarkerArrayUnion[i].setMap(null);
+
+	for(var i=0; schoolMarkerArrayApCp[i]; i++)
+		schoolMarkerArrayApCp[i].setMap(null);
+
+	schoolMarkerArrayUnion = [];
+	schoolMarkerArrayApCp = [];
+
 }
 
-function select_a_school(school, cp_lat, cp_long, ap_lat, ap_long, rad){
-	for(var i=0; i<school_list.length; i++){
-		//console.log("school_list: " + school_list[i].id + " schoolMarkerArray: " + schoolMarkerArray[i].id);
-		if(school_list[i].id == schoolMarkerArray[i].id){
-			var cp_sp_dis = getDistance({lat: cp_lat, lng: cp_long}, {lat: school_list[i].coordinates.latitude, lng: school_list[i].coordinates.longitude});
-			var ap_sp_dis = getDistance({lat: school_list[i].coordinates.latitude, lng: school_list[i].coordinates.longitude}, {lat: ap_lat, lng: ap_long});
-
-			if(cp_sp_dis <= rad && ap_sp_dis <= rad)
-					schoolMarkerArray[i].setIcon("http://www.192.com/schools/images/school.png");
-				else
-					schoolMarkerArray[i].setIcon("http://www.192.com/schools/details/images/school.png?1.b518");
-
-
-			if(school.id == schoolMarkerArray[i].id)
-				schoolMarkerArray[i].setIcon("http://www.192.com/schools/images/schoolPlaceAvailable.png");
-
+function select_a_school(school){
+	for(var i=0; schoolMarkerArrayUnion[i]; i++){
+		if(school.id === schoolMarkerArrayUnion[i].id){
+			schoolMarkerArrayUnion[i].setIcon("http://www.192.com/schools/images/schoolPlaceAvailable.png");
+		} else {
+			schoolMarkerArrayUnion[i].setIcon("http://www.192.com/schools/images/school.png");
 		}
-		//map.setCenter({lat: school.coordinates.latitude, lng: school.coordinates.longitude})
+	}
+
+	for(var i=0; schoolMarkerArrayApCp[i]; i++){
+		if(school.id === schoolMarkerArrayApCp[i].id){
+			schoolMarkerArrayApCp[i].setIcon("http://www.192.com/schools/images/schoolPlaceAvailable.png");
+		} else {
+			schoolMarkerArrayApCp[i].setIcon("http://www.192.com/schools/details/images/school.png?1.b518");
+		}
 	}
 }
 
 
 function crimeMarkerDelete() {
-	if(crimeMarkerArray != null){
-		for(var i=0; i<crimeMarkerArray.length; i++)
-			crimeMarkerArray[i].setMap(null);
 
-		crimeMarkerArray = [];
-	}
+	for(var i=0; crimeMarkerArrayUnion[i]; i++)
+		crimeMarkerArrayUnion[i].setMap(null);
+
+	crimeMarkerArrayUnion = [];
+
+	for(var i=0; crimeMarkerArrayAp[i]; i++)
+		crimeMarkerArrayAp[i].setMap(null);
+
+	crimeMarkerArrayAp = [];
+
+	for(var i=0; crimeMarkerArrayCp[i]; i++)
+		crimeMarkerArrayCp[i].setMap(null);
+
+	crimeMarkerArrayCp = [];
 }
 
 
-function select_a_crime(crime, cp_lat, cp_long, ap_lat, ap_long, rad){
-	for(var i=0; i<crime_list.length; i++){
-		if(crime_list[i].id == crimeMarkerArray[i].id){
-			var cp_c = getDistance({lat: cp_lat, lng: cp_long}, {lat: crime_list[i].obj.location.y, lng: crime_list[i].obj.location.x})
-			var ap_c = getDistance({lat: ap_lat, lng: ap_long}, {lat: crime_list[i].obj.location.y, lng: crime_list[i].obj.location.x})
+function select_a_crime(crime){
+	for(var i=0; crimeMarkerArrayUnion[i]; i++){
+		if(crime.id === crimeMarkerArrayUnion[i].id){
+			crimeMarkerArrayUnion[i].setIcon("http://maps.google.com/mapfiles/ms/micons/ltblu-pushpin.png")
+		} else {
+			crimeMarkerArrayUnion[i].setIcon("http://maps.google.com/mapfiles/ms/micons/grn-pushpin.png");
+		}
+	}
 
-			if(cp_c <= rad && ap_c <= rad){
+	for(var i=0; crimeMarkerArrayAp[i]; i++){
+		if(crime.id === crimeMarkerArrayAp[i].id){
+			crimeMarkerArrayAp[i].setIcon("http://maps.google.com/mapfiles/ms/micons/ltblu-pushpin.png")
+		} else {
+			crimeMarkerArrayAp[i].setIcon("http://maps.google.com/mapfiles/ms/micons/blue-pushpin.png");
+		}
+	}
 
-				crimeMarkerArray[i].setIcon("http://maps.google.com/mapfiles/ms/micons/grn-pushpin.png");
-			}
-			else if(cp_c <= rad && ap_c > rad)
-				crimeMarkerArray[i].setIcon("http://maps.google.com/mapfiles/ms/micons/ylw-pushpin.png");
-			else if(cp_c > rad && ap_c <= rad)
-				crimeMarkerArray[i].setIcon("http://maps.google.com/mapfiles/ms/micons/blue-pushpin.png");
-
-
-			if(crime.id == crimeMarkerArray[i].id)
-				crimeMarkerArray[i].setIcon("http://maps.google.com/mapfiles/ms/micons/ltblu-pushpin.png");
-
+	for(var i=0; crimeMarkerArrayCp[i]; i++){
+		if(crime.id === crimeMarkerArrayCp[i].id){
+			crimeMarkerArrayCp[i].setIcon("http://maps.google.com/mapfiles/ms/micons/ltblu-pushpin.png")
+		} else {
+			crimeMarkerArrayCp[i].setIcon("http://maps.google.com/mapfiles/ms/micons/ylw-pushpin.png");
 		}
 	}
 }

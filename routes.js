@@ -50,8 +50,8 @@ module.exports = function(app){
 		   geoNear: "crimes" ,
 		   near: { type: "Point" , coordinates: [ objSelected.ap_lon, objSelected.ap_lat ]} ,
 		   spherical: true,
-		   "maxDistance" : radius,
-		   "limit" : 10
+		   "maxDistance" : 9656.064,
+		   "limit" : 8
 		}, function(err, docs){
 			if(err)
 				throw err;
@@ -75,8 +75,8 @@ module.exports = function(app){
 		   geoNear: "crimes" ,
 		   near: { type: "Point" , coordinates: [ objSelected.cp_lon, objSelected.cp_lat ]} ,
 		   spherical: true,
-		   "maxDistance" : radius,
-		   "limit" : 10
+		   "maxDistance" : 9656.064,
+		   "limit" : 8
 		}, function(err, docs){
 			if(err)
 				throw err;
@@ -105,8 +105,8 @@ module.exports = function(app){
 		   geoNear: "schoolDetail" ,
 		   near: { type: "Point" , coordinates: [ objSelected.ap_lon, objSelected.ap_lat ]} ,
 		   spherical: true,
-		   "maxDistance" : radius,
-		   "limit" : 20
+		   "maxDistance" : 32186.88,
+		   "limit" : 6
 		}, function(err, docs){
 			if(err)
 				throw err;
@@ -139,8 +139,8 @@ module.exports = function(app){
 		   geoNear: "schoolDetail" ,
 		   near: { type: "Point" , coordinates: [ objSelected.cp_lon, objSelected.cp_lat ]} ,
 		   spherical: true,
-		   "maxDistance" : radius,
-		   "limit" : 20
+		   "maxDistance" : 32186.88,
+		   "limit" : 6
 		}, function(err, docs){
 			if(err)
 				throw err;

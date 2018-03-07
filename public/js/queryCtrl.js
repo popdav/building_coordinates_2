@@ -133,27 +133,28 @@ queryCtrl.controller('queryCtrl', function($scope, $http, $rootScope, geolocatio
 				radi: $scope.formData.radius
 			}
 			console.log(schoolBody)
-			var school_list1 = [], school_list2 = [];
-			var tmp = false;
+
+
 			$http.post('/schoolAp', schoolBody)
 				.then(function(docs){
-					school_list = school_list.concat(docs.data);
+					school_list1 = docs.data;
 				})
 				.then(function(docs){
 					$http.post('/schoolCp', schoolBody)
 						.then(function(docs){
-							school_list = school_list.concat(docs.data);
-							deleteDuplicates(school_list);
-							console.log(school_list);
+							school_list2 = docs.data;
+							diffAndUniSchool();
 							$scope.schoolAddress = school_list;
 							$scope.indeks4 = 1;
-							schoolMarkerMaker(obj.cp_lat, obj.cp_lon, obj.ap_lat, obj.ap_lon, $scope.formData.radius);
+							schoolMarkerMaker();
 						})
+
 						.catch(function(err){
 								console.log("Error " + err);
 								throw err;
 						})
 				})
+
 				.catch(function(err){
 						console.log("Error " + err);
 						throw err;
@@ -175,7 +176,7 @@ queryCtrl.controller('queryCtrl', function($scope, $http, $rootScope, geolocatio
 
 
 		if(schoolObj != undefined || schoolObj != null){
-			select_a_school(schoolObj[0], obj.cp_lat, obj.cp_lon, obj.ap_lat, obj.ap_lon, $scope.formData.radius);
+			select_a_school(schoolObj[0]);
 		}
 	}
 
@@ -190,63 +191,110 @@ queryCtrl.controller('queryCtrl', function($scope, $http, $rootScope, geolocatio
 
 	}
 
-	function schoolMarkerMaker(cp_lat, cp_long, ap_lat, ap_long, rad) {
-		if(school_list != null) {
-			for(var i=0; i<school_list.length; i++){
-				var cp_sp_dis = getDistance({lat: cp_lat, lng: cp_long}, {lat: school_list[i].coordinates.latitude, lng: school_list[i].coordinates.longitude});
-				var ap_sp_dis = getDistance({lat: school_list[i].coordinates.latitude, lng: school_list[i].coordinates.longitude}, {lat: ap_lat, lng: ap_long});
+	function schoolMarkerMaker() {
+		for(var i=0; school_union[i]; i++){
+			var school_marker = new google.maps.Marker({
+			    position: {lat: school_union[i].coordinates.latitude, lng: school_union[i].coordinates.longitude},
+			    map: map,
+			    icon: "http://www.192.com/schools/images/school.png"
+		  	});
+			school_marker.set("id", school_union[i].id);
+			school_marker.addListener('click', function(){
+				for(var i=0; schoolMarkerArrayUnion[i]; i++)
+					schoolMarkerArrayUnion[i].setIcon("http://www.192.com/schools/images/school.png");
+				for(var i=0; schoolMarkerArrayApCp[i]; i++)
+					schoolMarkerArrayApCp[i].setIcon("http://www.192.com/schools/details/images/school.png?1.b518");
 
+				this.setIcon("http://www.192.com/schools/images/schoolPlaceAvailable.png");
 
-				if(cp_sp_dis <= rad || ap_sp_dis <= rad){
-					if(cp_sp_dis <= rad && ap_sp_dis <= rad)
-							school_icon = "http://www.192.com/schools/images/school.png";
-						else
-							school_icon = "http://www.192.com/schools/details/images/school.png?1.b518";
-
-					var school_marker = new google.maps.Marker({
-					    position: {lat: school_list[i].coordinates.latitude, lng: school_list[i].coordinates.longitude},
-					    map: map,
-					    icon: school_icon
-				  	});
-					school_marker.set("id", school_list[i].id);
-					school_marker.addListener('click', function() {
-						for(var i=0; i<schoolMarkerArray.length; i++){
-							var cp_sp_dis = getDistance({lat: cp_lat, lng: cp_long}, {lat: school_list[i].coordinates.latitude, lng: school_list[i].coordinates.longitude});
-							var ap_sp_dis = getDistance({lat: school_list[i].coordinates.latitude, lng: school_list[i].coordinates.longitude}, {lat: ap_lat, lng: ap_long});
-
-							if(cp_sp_dis <= rad && ap_sp_dis <= rad)
-									schoolMarkerArray[i].setIcon("http://www.192.com/schools/images/school.png");
-								else
-									schoolMarkerArray[i].setIcon("http://www.192.com/schools/details/images/school.png?1.b518");
-						}
-
-						this.setIcon("http://www.192.com/schools/images/schoolPlaceAvailable.png");
-
-
-						var pos;
-						for(var i=0; i<$scope.schoolAddress.length; i++) {
-							if(this.id === $scope.schoolAddress[i].id){
-								$scope.selectedSchool = [];
-								$scope.selectedSchool.push($scope.schoolAddress[i]);
-								pos=i;
-							}
-						}
-
-						var mySelectSch = document.getElementById('mySelect');
-						var y=0;
-						if(pos >= 10 && pos < 20)
-							y = 170;
-
-						mySelectSch.click();
-						mySelectSch.scrollTo(0, y);
-
-
-					});
-					schoolMarkerArray.push(school_marker);
-
+				var pos;
+				for(var i=0; i<$scope.schoolAddress.length; i++) {
+					if(this.id === $scope.schoolAddress[i].id){
+						$scope.selectedSchool = [];
+						$scope.selectedSchool.push($scope.schoolAddress[i]);
+						pos=i;
+					}
 				}
-			}
 
+				var mySelectSch = document.getElementById('mySelect');
+				var y=0;
+				if(pos >= 10 && pos < 20)
+					y = 170;
+
+				mySelectSch.click();
+				mySelectSch.scrollTo(0, y);
+			})
+			schoolMarkerArrayUnion.push(school_marker);
+		}
+
+		for(var i=0; school_diff_ap[i]; i++){
+			var school_marker = new google.maps.Marker({
+			    position: {lat: school_diff_ap[i].coordinates.latitude, lng: school_diff_ap[i].coordinates.longitude},
+			    map: map,
+			    icon: "http://www.192.com/schools/details/images/school.png?1.b518"
+		  	});
+			school_marker.set("id", school_diff_ap[i].id);
+			school_marker.addListener('click', function(){
+				for(var i=0; schoolMarkerArrayUnion[i]; i++)
+					schoolMarkerArrayUnion[i].setIcon("http://www.192.com/schools/images/school.png");
+				for(var i=0; schoolMarkerArrayApCp[i]; i++)
+					schoolMarkerArrayApCp[i].setIcon("http://www.192.com/schools/details/images/school.png?1.b518");
+
+				this.setIcon("http://www.192.com/schools/images/schoolPlaceAvailable.png");
+
+				var pos;
+				for(var i=0; i<$scope.schoolAddress.length; i++) {
+					if(this.id === $scope.schoolAddress[i].id){
+						$scope.selectedSchool = [];
+						$scope.selectedSchool.push($scope.schoolAddress[i]);
+						pos=i;
+					}
+				}
+
+				var mySelectSch = document.getElementById('mySelect');
+				var y=0;
+				if(pos >= 10 && pos < 20)
+					y = 170;
+
+				mySelectSch.click();
+				mySelectSch.scrollTo(0, y);
+			})
+			schoolMarkerArrayApCp.push(school_marker);
+		}
+
+		for(var i=0; school_diff_cp[i]; i++){
+			var school_marker = new google.maps.Marker({
+			    position: {lat: school_diff_cp[i].coordinates.latitude, lng: school_diff_cp[i].coordinates.longitude},
+			    map: map,
+			    icon: "http://www.192.com/schools/details/images/school.png?1.b518"
+		  	});
+			school_marker.set("id", school_diff_cp[i].id);
+			school_marker.addListener('click', function(){
+				for(var i=0; schoolMarkerArrayUnion[i]; i++)
+					schoolMarkerArrayUnion[i].setIcon("http://www.192.com/schools/images/school.png");
+				for(var i=0; schoolMarkerArrayApCp[i]; i++)
+					schoolMarkerArrayApCp[i].setIcon("http://www.192.com/schools/details/images/school.png?1.b518");
+
+				this.setIcon("http://www.192.com/schools/images/schoolPlaceAvailable.png");
+
+				var pos;
+				for(var i=0; i<$scope.schoolAddress.length; i++) {
+					if(this.id === $scope.schoolAddress[i].id){
+						$scope.selectedSchool = [];
+						$scope.selectedSchool.push($scope.schoolAddress[i]);
+						pos=i;
+					}
+				}
+
+				var mySelectSch = document.getElementById('mySelect');
+				var y=0;
+				if(pos >= 10 && pos < 20)
+					y = 170;
+
+				mySelectSch.click();
+				mySelectSch.scrollTo(0, y);
+			})
+			schoolMarkerArrayApCp.push(school_marker);
 		}
 	}
 
@@ -316,12 +364,7 @@ queryCtrl.controller('queryCtrl', function($scope, $http, $rootScope, geolocatio
 
 						docs.data[i].string = string;
 					}
-					console.log(docs.data);
-					crime_list = crime_list.concat(docs.data);
-					/*$scope.policeAddress = docs.data;
-					$scope.indeks6 = 1;
-					crime_list = docs.data;
-					crimeMarkerMaker();*/
+					crime_list1 = docs.data;
 				})
 				.then(function(docs){
 					$http.post('/crimesCp', policeBody)
@@ -380,14 +423,11 @@ queryCtrl.controller('queryCtrl', function($scope, $http, $rootScope, geolocatio
 
 								docs.data[i].string = string;
 							}
-							console.log(docs.data);
-
+							crime_list2 = docs.data;
+							diffAndUniCrime();
 							$scope.indeks6 = 1;
-							crime_list = crime_list.concat(docs.data);
 							$scope.policeAddress = crime_list;
-							deleteDuplicatesCrimes(crime_list);
-							console.log(crime_list);
-							crimeMarkerMaker(obj.cp_lat, obj.cp_lon, obj.ap_lat, obj.ap_lon, $scope.formData.radius);
+							crimeMarkerMaker();
 						})
 						.catch(function(err){
 								console.log("Error " + err);
@@ -402,75 +442,127 @@ queryCtrl.controller('queryCtrl', function($scope, $http, $rootScope, geolocatio
 	}
 
 
-	function crimeMarkerMaker(cp_lat, cp_long, ap_lat, ap_long, rad) {
-		if(crime_list != null) {
-			for(var i=0; i<crime_list.length; i++){
-				/*var cp_sp_dis = getDistance({lat: cp_lat, lng: cp_long}, {lat: school_list[i].coordinates.latitude, lng: school_list[i].coordinates.longitude});
-				var ap_sp_dis = getDistance({lat: school_list[i].coordinates.latitude, lng: school_list[i].coordinates.longitude}, {lat: ap_lat, lng: ap_long});*/
-				var cp_c = getDistance({lat: cp_lat, lng: cp_long}, {lat: crime_list[i].obj.location.y, lng: crime_list[i].obj.location.x})
-				var ap_c = getDistance({lat: ap_lat, lng: ap_long}, {lat: crime_list[i].obj.location.y, lng: crime_list[i].obj.location.x})
-
-				var crime_icon;
-				if(cp_c <= rad && ap_c <= rad){
-
-					crime_icon = "http://maps.google.com/mapfiles/ms/micons/grn-pushpin.png";
-				}
-				else if(cp_c <= rad && ap_c > rad)
-					crime_icon = "http://maps.google.com/mapfiles/ms/micons/ylw-pushpin.png";
-				else if(cp_c > rad && ap_c <= rad)
-					crime_icon = "http://maps.google.com/mapfiles/ms/micons/blue-pushpin.png";
-
-				var crime_marker = new google.maps.Marker({
-				    position: {lat: crime_list[i].obj.location.y, lng: crime_list[i].obj.location.x},
+	function crimeMarkerMaker() {
+		for(var i=0; crime_union[i]; i++){
+			var crime_marker = new google.maps.Marker({
+				    position: {lat: crime_union[i].obj.location.y, lng: crime_union[i].obj.location.x},
 				    map: map,
-				    icon: crime_icon
+				    icon: "http://maps.google.com/mapfiles/ms/micons/grn-pushpin.png"
 			  	});
-				crime_marker.set("id", crime_list[i].id);
-				crime_marker.addListener('click', function() {
-					for(var i=0; i<crimeMarkerArray.length; i++){
-
-						var cp_c = getDistance({lat: cp_lat, lng: cp_long}, {lat: crime_list[i].obj.location.y, lng: crime_list[i].obj.location.x})
-						var ap_c = getDistance({lat: ap_lat, lng: ap_long}, {lat: crime_list[i].obj.location.y, lng: crime_list[i].obj.location.x})
-
-						if(cp_c <= rad && ap_c <= rad){
-
-							crimeMarkerArray[i].setIcon("http://maps.google.com/mapfiles/ms/micons/grn-pushpin.png");
-						}
-						else if(cp_c <= rad && ap_c > rad)
-							crimeMarkerArray[i].setIcon("http://maps.google.com/mapfiles/ms/micons/ylw-pushpin.png");
-						else if(cp_c > rad && ap_c <= rad)
-							crimeMarkerArray[i].setIcon("http://maps.google.com/mapfiles/ms/micons/blue-pushpin.png");
-
-
-						//crimeMarkerArray[i].setIcon(crime_icon);
-					}
+				crime_marker.set("id", crime_union[i].id);
+				crime_marker.addListener('click', function(){
+					for(var i=0; crimeMarkerArrayUnion[i]; i++)
+						crimeMarkerArrayUnion[i].setIcon("http://maps.google.com/mapfiles/ms/micons/grn-pushpin.png");
+					for(var i=0; crimeMarkerArrayAp[i]; i++)
+						crimeMarkerArrayAp[i].setIcon("http://maps.google.com/mapfiles/ms/micons/blue-pushpin.png");
+					for(var i=0; crimeMarkerArrayCp[i]; i++)
+						crimeMarkerArrayCp[i].setIcon("http://maps.google.com/mapfiles/ms/micons/ylw-pushpin.png");
 
 					this.setIcon("http://maps.google.com/mapfiles/ms/micons/ltblu-pushpin.png");
 
-
+					var pos;
 					for(var i=0; i<$scope.policeAddress.length; i++) {
-							if(this.id === $scope.policeAddress[i].id){
-								$scope.selectedCrime = [];
-								$scope.selectedCrime.push($scope.policeAddress[i]);
-							}
+						if(this.id === $scope.policeAddress[i].id){
+							$scope.selectedCrime = [];
+							$scope.selectedCrime.push($scope.policeAddress[i]);
+							pos = i;
 						}
+					}
 
+					var y=0;
+					if(pos >= 10 && pos < 20)
+						y = 170;
 
 					var mySelectCri = document.getElementById('myPolice');
 					var att = document.createAttribute("selected");
 					mySelectCri.setAttributeNode(att);
 
 					mySelectCri.click();
-
-
-
-				});
-				crimeMarkerArray.push(crime_marker);
-
-
-			}
-
+					mySelectCri.scrollTo(0, y);
+				})
+				crimeMarkerArrayUnion.push(crime_marker);
 		}
+
+		for(var i=0; crime_diff_ap[i]; i++){
+			var crime_marker = new google.maps.Marker({
+				    position: {lat: crime_diff_ap[i].obj.location.y, lng: crime_diff_ap[i].obj.location.x},
+				    map: map,
+				    icon: "http://maps.google.com/mapfiles/ms/micons/blue-pushpin.png"
+			  	});
+				crime_marker.set("id", crime_diff_ap[i].id);
+				crime_marker.addListener('click', function(){
+					for(var i=0; crimeMarkerArrayUnion[i]; i++)
+						crimeMarkerArrayUnion[i].setIcon("http://maps.google.com/mapfiles/ms/micons/grn-pushpin.png");
+					for(var i=0; crimeMarkerArrayAp[i]; i++)
+						crimeMarkerArrayAp[i].setIcon("http://maps.google.com/mapfiles/ms/micons/blue-pushpin.png");
+					for(var i=0; crimeMarkerArrayCp[i]; i++)
+						crimeMarkerArrayCp[i].setIcon("http://maps.google.com/mapfiles/ms/micons/ylw-pushpin.png");
+
+					this.setIcon("http://maps.google.com/mapfiles/ms/micons/ltblu-pushpin.png");
+
+					var pos;
+					for(var i=0; i<$scope.policeAddress.length; i++) {
+						if(this.id === $scope.policeAddress[i].id){
+							$scope.selectedCrime = [];
+							$scope.selectedCrime.push($scope.policeAddress[i]);
+							pos = i;
+						}
+					}
+
+					var y=0;
+					if(pos >= 10 && pos < 20)
+						y = 170;
+
+					var mySelectCri = document.getElementById('myPolice');
+					var att = document.createAttribute("selected");
+					mySelectCri.setAttributeNode(att);
+
+					mySelectCri.click();
+					mySelectCri.scrollTo(0, y);
+				})
+				crimeMarkerArrayAp.push(crime_marker);
+		}
+
+		for(var i=0; crime_diff_cp[i]; i++){
+			var crime_marker = new google.maps.Marker({
+				    position: {lat: crime_diff_cp[i].obj.location.y, lng: crime_diff_cp[i].obj.location.x},
+				    map: map,
+				    icon: "http://maps.google.com/mapfiles/ms/micons/ylw-pushpin.png"
+			  	});
+				crime_marker.set("id", crime_diff_cp[i].id);
+				crime_marker.addListener('click', function(){
+					for(var i=0; crimeMarkerArrayUnion[i]; i++)
+						crimeMarkerArrayUnion[i].setIcon("http://maps.google.com/mapfiles/ms/micons/grn-pushpin.png");
+					for(var i=0; crimeMarkerArrayAp[i]; i++)
+						crimeMarkerArrayAp[i].setIcon("http://maps.google.com/mapfiles/ms/micons/blue-pushpin.png");
+					for(var i=0; crimeMarkerArrayCp[i]; i++)
+						crimeMarkerArrayCp[i].setIcon("http://maps.google.com/mapfiles/ms/micons/ylw-pushpin.png");
+
+					this.setIcon("http://maps.google.com/mapfiles/ms/micons/ltblu-pushpin.png");
+
+					var pos;
+					for(var i=0; i<$scope.policeAddress.length; i++) {
+						if(this.id === $scope.policeAddress[i].id){
+							$scope.selectedCrime = [];
+							$scope.selectedCrime.push($scope.policeAddress[i]);
+							pos = i;
+						}
+					}
+
+					var y=0;
+					if(pos >= 10 && pos < 20)
+						y = 170;
+
+					var mySelectCri = document.getElementById('myPolice');
+					var att = document.createAttribute("selected");
+					mySelectCri.setAttributeNode(att);
+
+					mySelectCri.click();
+					mySelectCri.scrollTo(0, y);
+				})
+				crimeMarkerArrayCp.push(crime_marker);
+		}
+
 	}
 
 	//funkcija za odabir prekrsaja
@@ -486,13 +578,105 @@ queryCtrl.controller('queryCtrl', function($scope, $http, $rootScope, geolocatio
 
 
 		if(crimeObj != undefined || crimeObj != null){
-			select_a_crime(crimeObj[0], obj.cp_lat, obj.cp_lon, obj.ap_lat, obj.ap_lon, $scope.formData.radius);
+			select_a_crime(crimeObj[0]);
 		}
 	}
 
 
 });
 
+function diffAndUniSchool(){
+	school_union = [];
+	school_diff_ap = [];
+	school_diff_cp = [];
+	school_list = [];
+
+	for(var i=0; school_list1[i]; i++){
+		for(var j=0; school_list2[j]; j++){
+			if(school_list1[i].name === school_list2[j].name){
+				school_union.push(school_list1[i]);
+			}
+		}
+	}
+	deleteDuplicates(school_union);
+
+	var is_in = false;
+	for(var i=0; school_list1[i]; i++){
+		is_in = false;
+		for(var j=0; school_list2[j]; j++){
+			if(school_list1[i].name === school_list2[j].name){
+				is_in = true;
+			}
+		}
+		if(!is_in)
+			school_diff_ap.push(school_list1[i]);
+	}
+
+	for(var i=0; school_list2[i]; i++){
+		is_in = false;
+		for(var j=0; school_list1[j]; j++){
+			if(school_list1[j].name === school_list2[i].name){
+				is_in = true;
+			}
+		}
+		if(!is_in)
+			school_diff_cp.push(school_list2[i]);
+	}
+
+	school_list = school_list.concat(school_union);
+	school_list = school_list.concat(school_diff_ap);
+	school_list = school_list.concat(school_diff_cp);
+	console.log(school_list);
+
+}
+
+function diffAndUniCrime(){
+	crime_list = [];
+	crime_union = [];
+	crime_diff_ap = [];
+	crime_diff_cp = [];
+
+	for(var i=0; crime_list1[i]; i++){
+		for(var j=0; crime_list2[j]; j++){
+			if(crime_list1[i].obj.location.x === crime_list2[j].obj.location.x
+				&& crime_list1[i].obj.location.y === crime_list2[j].obj.location.y){
+					crime_union.push(crime_list1[i]);
+				}
+		}
+	}
+
+	deleteDuplicatesCrimes(crime_union);
+
+	var is_in = false;
+	for(var i=0; crime_list1[i]; i++){
+		is_in = false;
+		for(var j=0; crime_list2[j]; j++){
+			if(crime_list1[i].obj.location.x === crime_list2[j].obj.location.x
+				&& crime_list1[i].obj.location.y === crime_list2[j].obj.location.y){
+					is_in = true;
+				}
+		}
+		if(!is_in)
+			crime_diff_ap.push(crime_list1[i]);
+	}
+
+
+	for(var i=0; crime_list2[i]; i++){
+		is_in = false;
+		for(var j=0; crime_list1[j]; j++){
+			if(crime_list1[j].obj.location.x === crime_list2[i].obj.location.x
+				&& crime_list1[j].obj.location.y === crime_list2[i].obj.location.y){
+					is_in = true;
+				}
+		}
+		if(!is_in)
+			crime_diff_cp.push(crime_list2[i]);
+	}
+	crime_list = crime_list.concat(crime_union);
+	crime_list = crime_list.concat(crime_diff_ap);
+	crime_list = crime_list.concat(crime_diff_cp);
+	console.log(crime_list);
+}
 
 function deleteDuplicates(niz){
 	var a;
