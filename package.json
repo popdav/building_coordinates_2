@@ -12,7 +12,7 @@
     "jsonwebtoken": "^5.0.2",
     "method-override": "~2.1.2",
     "mongodb": "",
-    "mongoose": "~4.1.0",
+    "mongoose": "~5.7.7",
     "morgan": "~1.2.2",
     "stacktrace-js": "^2.0.0"
   }
